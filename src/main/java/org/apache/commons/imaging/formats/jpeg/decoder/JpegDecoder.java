@@ -338,20 +338,43 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
 
     private void readMCU(final JpegInputStream is, final int[] preds, final Block[] mcu)
             throws IOException, ImageReadException {
+        System.out.println("Covering branches of readMCU");
+        int[] branchFlags = new int[19];
+
+        // 0
+        branchFlags[0]++;
         for (int i = 0; i < sosSegment.numberOfComponents; i++) {
             final SosSegment.Component scanComponent = sosSegment.getComponents(i);
             SofnSegment.Component frameComponent = null;
+
             for (int j = 0; j < sofnSegment.numberOfComponents; j++) {
+                // 1
+                branchFlags[1]++;
                 if (sofnSegment.getComponents(j).componentIdentifier == scanComponent.scanComponentSelector) {
+                    // 2
+                    branchFlags[2]++;
                     frameComponent = sofnSegment.getComponents(j);
                     break;
                 }
             }
             if (frameComponent == null) {
+                // 3
+                branchFlags[3]++;
+                System.err.println(Arrays.toString(branchFlags));
+                System.err.println("Branches covered:");
+                for (int j = 0; j < branchFlags.length; j++) {
+                    if (branchFlags[j] > 0){
+                        System.err.println(j + " ");
+                    }
+                }
                 throw new ImageReadException("Invalid component");
             }
+            // 5
+            branchFlags[4]++;
             final Block fullBlock = mcu[i];
             for (int y = 0; y < frameComponent.verticalSamplingFactor; y++) {
+                // 6
+                branchFlags[5]++;
                 for (int x = 0; x < frameComponent.horizontalSamplingFactor; x++) {
                     Arrays.fill(zz, 0);
                     // page 104 of T.81
@@ -365,6 +388,8 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
 
                     // "Decode_AC_coefficients", figure F.13, page 106 of T.81
                     int k = 1;
+                    // 7
+                    branchFlags[6]++;
                     while (true) {
                         final int rs = decode(
                                 is,
@@ -374,12 +399,20 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
                         final int r = rrrr;
 
                         if (ssss == 0) {
+                            // 8
+                            branchFlags[7]++;
                             if (r == 15) {
+                                // 9
+                                branchFlags[8]++;
                                 k += 16;
                             } else {
+                                // 10
+                                branchFlags[9]++;
                                 break;
                             }
                         } else {
+                            // 11
+                            branchFlags[10]++;
                             k += r;
 
                             // "Decode_ZZ(k)", figure F.14, page 107 of T.81
@@ -387,8 +420,12 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
                             zz[k] = extend(zz[k], ssss);
 
                             if (k == 63) {
+                                // 12
+                                branchFlags[11]++;
                                 break;
                             } else {
+                                // 13
+                                branchFlags[12]++;
                                 k++;
                             }
                         }
@@ -399,6 +436,8 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
 
                     final float[] scaledQuantizationTable = scaledQuantizationTables[frameComponent.quantTabDestSelector];
                     ZigZag.zigZagToBlock(zz, blockInt);
+                    // 14
+                    branchFlags[13]++;
                     for (int j = 0; j < 64; j++) {
                         block[j] = blockInt[j] * scaledQuantizationTable[j];
                     }
@@ -407,16 +446,26 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
                     int dstRowOffset = 8 * y * 8
                             * frameComponent.horizontalSamplingFactor + 8 * x;
                     int srcNext = 0;
+                    // 15
+                    branchFlags[14]++;
                     for (int yy = 0; yy < 8; yy++) {
+                        // 16
+                        branchFlags[15]++;
                         for (int xx = 0; xx < 8; xx++) {
                             float sample = block[srcNext++];
                             sample += shift;
                             int result;
                             if (sample < 0) {
+                                // 17
+                                branchFlags[16]++;
                                 result = 0;
                             } else if (sample > max) {
+                                // 18
+                                branchFlags[17]++;
                                 result = max;
                             } else {
+                                // 19
+                                branchFlags[18]++;
                                 result = fastRound(sample);
                             }
                             fullBlock.samples[dstRowOffset + xx] = result;
@@ -425,6 +474,13 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
                     }
                 }
             }
+        }
+
+       System.err.println(Arrays.toString(branchFlags));
+       System.err.println("Branches covered");
+        for (int j = 0; j < branchFlags.length; j++) {
+            if (branchFlags[j] > 0);
+            System.err.println("Branch: " + (j + 1) + " " +  branchFlags[j]);
         }
     }
 
