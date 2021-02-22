@@ -18,6 +18,7 @@ package org.apache.commons.imaging.formats.icns;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.imaging.ImageReadException;
@@ -205,13 +206,28 @@ final class IcnsDecoder {
 
     public static BufferedImage decodeImage(final IcnsImageParser.IcnsElement[] icnsElements, final int index)
             throws ImageReadException {
+        System.err.println("Segment coverage for decodeImage:");
+        int[] branchFlags = new int[11];
         final IcnsImageParser.IcnsElement imageElement = icnsElements[index];
         final IcnsType imageType = IcnsType.findImageType(imageElement.type);
+        //0
+        branchFlags[0]++;
         if (imageType == null) {
+            //1
+            branchFlags[1]++;
+            System.err.println(Arrays.toString(branchFlags));
+            System.err.println("Segment covered:");
+            for(int i = 0; i < branchFlags.length; i++)
+            {
+                if (branchFlags[i] > 0) System.err.print(i + " ");
+            }
+            System.err.println("\nSegment coverage finished [0].\n");
             return null;
         }
 
         // PNG or JPEG 2000
+        //2
+        branchFlags[2]++;
         if (imageType == IcnsType.ICNS_16x16_32BIT_ARGB_IMAGE
             || imageType == IcnsType.ICNS_32x32_32BIT_ARGB_IMAGE
             || imageType == IcnsType.ICNS_64x64_32BIT_ARGB_IMAGE
@@ -225,20 +241,57 @@ final class IcnsDecoder {
             || imageType == IcnsType.ICNS_512x512_2x_32BIT_ARGB_IMAGE) {
             BufferedImage image = null;
             try {
+                //3
+                branchFlags[3]++;
                 image = Imaging.getBufferedImage(imageElement.data);
             } catch (final Exception ex) {
+                //4
+                branchFlags[4]++;
                 if (imageType.getWidth() <= 32) {
                     try {
+                        //5
+                        branchFlags[5]++;
                         image = decodeImageImpl(imageType, imageElement, icnsElements);
-                    } catch (final Exception ignored) { }
+                    } catch (final Exception ignored) {
+                        //6
+                        branchFlags[6]++;
+                        System.err.println(Arrays.toString(branchFlags));
+                        System.err.println("Segments covered:");
+                        for(int i = 0; i < branchFlags.length; i++)
+                        {
+                            if (branchFlags[i] > 0) System.err.print(i + " ");
+                        }
+                        System.err.println("\nSegment coverage finished [2].\n");
+                      }
                 }
+                //7
+                branchFlags[7]++;
                 if (image == null) {
+                    //8
+                    branchFlags[8]++;
                     image = new BufferedImage(imageType.getWidth(), imageType.getHeight(), BufferedImage.TYPE_INT_ARGB);
                 }
             }
+            //9
+            branchFlags[9]++;
+            System.err.println(Arrays.toString(branchFlags));
+            System.err.println("Segments covered:");
+            for(int i = 0; i < branchFlags.length; i++)
+            {
+                if (branchFlags[i] > 0) System.err.print(i + " ");
+            }
+            System.err.println("\nSegment coverage finished [1].\n");
             return image;
         }
-
+        //10
+        branchFlags[10]++;
+        System.err.println(Arrays.toString(branchFlags));
+        System.err.println("Segments covered:");
+        for(int i = 0; i < branchFlags.length; i++)
+        {
+            if (branchFlags[i] > 0) System.err.print(i + " ");
+        }
+        System.err.println("\nSegment coverage finished [2].\n");
         return decodeImageImpl(imageType, imageElement, icnsElements);
     }
 
