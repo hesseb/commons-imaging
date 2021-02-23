@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -265,34 +266,55 @@ public class IcnsImageParser extends ImageParser {
     @Override
     public void writeImage(final BufferedImage src, final OutputStream os, Map<String, Object> params)
             throws ImageWriteException, IOException {
+        System.err.println("Coverage for IcnsImageParser::writeImage:");
+        int[] branchFlags = new int[12];
+
+        branchFlags[0]++;
         // make copy of params; we'll clear keys as we consume them.
         params = (params == null) ? new HashMap<>() : new HashMap<>(params);
 
         // clear format key.
         if (params.containsKey(PARAM_KEY_FORMAT)) {
+            branchFlags[1]++;
             params.remove(PARAM_KEY_FORMAT);
         }
 
         if (!params.isEmpty()) {
+            branchFlags[2]++;
+            System.err.println(Arrays.toString(branchFlags));
+            System.err.println("Branches covered:");
+            for(int i = 0; i < branchFlags.length; i++) {
+                if (branchFlags[i] > 0) System.err.print(i + " "); }
+
             final Object firstKey = params.keySet().iterator().next();
             throw new ImageWriteException("Unknown parameter: " + firstKey);
         }
 
         IcnsType imageType;
         if (src.getWidth() == 16 && src.getHeight() == 16) {
+            branchFlags[3]++;
             imageType = IcnsType.ICNS_16x16_32BIT_IMAGE;
         } else if (src.getWidth() == 32 && src.getHeight() == 32) {
+            branchFlags[4]++;
             imageType = IcnsType.ICNS_32x32_32BIT_IMAGE;
         } else if (src.getWidth() == 48 && src.getHeight() == 48) {
+            branchFlags[5]++;
             imageType = IcnsType.ICNS_48x48_32BIT_IMAGE;
         } else if (src.getWidth() == 128 && src.getHeight() == 128) {
+            branchFlags[6]++;
             imageType = IcnsType.ICNS_128x128_32BIT_IMAGE;
         } else {
+            branchFlags[7]++;
+            System.err.println(Arrays.toString(branchFlags));
+            System.err.println("Branches covered:");
+            for(int i = 0; i < branchFlags.length; i++) {
+                if (branchFlags[i] > 0) System.err.print(i + " "); }
             throw new ImageWriteException("Invalid/unsupported source width "
                     + src.getWidth() + " and height " + src.getHeight());
         }
 
         try (BinaryOutputStream bos = new BinaryOutputStream(os, ByteOrder.BIG_ENDIAN)) {
+            branchFlags[7]++;
             bos.write4Bytes(ICNS_MAGIC);
             bos.write4Bytes(4 + 4 + 4 + 4 + 4 * imageType.getWidth()
             * imageType.getHeight() + 4 + 4 + imageType.getWidth()
@@ -302,7 +324,9 @@ public class IcnsImageParser extends ImageParser {
             bos.write4Bytes(4 + 4 + 4 * imageType.getWidth()
             * imageType.getHeight());
             for (int y = 0; y < src.getHeight(); y++) {
+                branchFlags[8]++;
                 for (int x = 0; x < src.getWidth(); x++) {
+                    branchFlags[9]++;
                     final int argb = src.getRGB(x, y);
                     bos.write(0);
                     bos.write(argb >> 16);
@@ -315,7 +339,9 @@ public class IcnsImageParser extends ImageParser {
             bos.write4Bytes(maskType.getType());
             bos.write4Bytes(4 + 4 + imageType.getWidth() * imageType.getWidth());
             for (int y = 0; y < src.getHeight(); y++) {
+                branchFlags[10]++;
                 for (int x = 0; x < src.getWidth(); x++) {
+                    branchFlags[11]++;
                     final int argb = src.getRGB(x, y);
                     bos.write(argb >> 24);
                 }
